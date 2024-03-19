@@ -1,1 +1,1 @@
-Readme de prueba
+Hay que entrar a la carpeta functional-js-group-10, y correr con "npm run dev" desde la terminal. De ahí abrir localhost por defecto que indique.

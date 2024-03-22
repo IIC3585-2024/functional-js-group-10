@@ -29,8 +29,8 @@ function processLine(htmlArray, line) {
     blank.create(htmlArray);
   } else if (heading.condition(htmlArray, line)) {
     heading.create(htmlArray, line);
-  } else if (list.condition(line)) {
-    list.create(htmlArray, line);
+  } else if (unorderedList.condition(line)) {
+    unorderedList.create(htmlArray, line);
   } else {
     paragraph.create(htmlArray, line);
   }
@@ -114,8 +114,6 @@ function applyEmphasis(line) {
   let length = 3;
   let relativeStart = 0;
   while (length > 0) {
-    console.log("emphasis", line);
-
     const index1 = line.indexOf(_.repeat("*", length), relativeStart);
     const index2 = line.indexOf(_.repeat("*", length), index1 + length);
     if (index1 === -1 || index2 === -1) {
@@ -156,23 +154,40 @@ const emphasis = {
   },
 };
 
-const list = {
+const unorderedList = {
   condition(line) {
+    line = line.trim();
     return line.startsWith("* ");
   },
   create(htmlArray, line) {
-    const content = _.trimStart(line, "* ");
-    htmlArray.push({ type: "list", tag: "li", content });
+    const lastElement = _.last(htmlArray);
+    const entry = {
+      type: "list-entry",
+      tag: "li",
+      content: _.trimStart(line, "* "),
+    };
+
+    if (lastElement && lastElement.type === "unordered-list") {
+      lastElement.children.push(entry);
+    } else {
+      htmlArray.push({ type: "unordered-list", tag: "ul", children: [entry] });
+    }
   },
 };
 
 function getHtmlText(htmlArray) {
-  return htmlArray
-    .map((line) => {
-      if (line.type === "blank") return "";
-      else return `<${line.tag}>${line.content}</${line.tag}>`;
-    })
-    .join("\n");
+  return htmlArray.map((object) => objectToHtmlText(object)).join("\n");
+}
+
+function objectToHtmlText(obj) {
+  if (obj.type === "blank") {
+    return "";
+  } else if (obj.children) {
+    const children = obj.children.map((child) => objectToHtmlText(child)).join("\n");
+    return `<${obj.tag}>\n${children}\n</${obj.tag}>`;
+  } else if (obj.content) {
+    return `<${obj.tag}>${obj.content}</${obj.tag}>`;
+  }
 }
 
 main();

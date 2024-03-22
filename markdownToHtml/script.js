@@ -28,7 +28,7 @@ function markdownToHtml(markdownText) {
 
 function processOneLine(line, index, html, originalLines) {
   line = line.trim();
-  if (heading.condition(line)) {
+  if (heading.condition(line, html)) {
     heading.create(line, html);
   } else if (list.condition(line)) {
     list.create(line, html);
@@ -42,13 +42,39 @@ function processOneLine(line, index, html, originalLines) {
 }
 
 const heading = {
-  condition(line) {
+  condition(line, html) {
+    return this.defaultCondition(line) || this.underlineCondition(line, html);
+  },
+  defaultCondition(line) {
     return line.startsWith("#");
   },
+  underlineCondition(line, html) {
+    if (!line.length) {
+      return;
+    }
+
+    const lastElement = _.last(html);
+    if (!lastElement || lastElement.type !== "paragraph") {
+      return;
+    }
+
+    return line === _.repeat("=", line.length) || line === _.repeat("-", line.length); // If its a line of only '=' create h1, if its only '-' create h2
+  },
   create(line, html) {
+    if (this.defaultCondition(line)) this.createDefault(line, html);
+    else if (this.underlineCondition(line, html)) this.createUnderline(line, html);
+  },
+  createDefault(line, html) {
     const level = _.takeWhile(line, (char) => char === "#").length;
     const content = _.trimStart(line, "# ");
-    html.push({ element: "heading", tag: "h" + level, content });
+    html.push({ type: "heading", tag: "h" + level, content });
+  },
+  createUnderline(line, html) {
+    const lastElement = _.last(html);
+    const content = lastElement.content;
+    const level = line[0] === "=" ? 1 : 2; // If its a line of only '=' create h1, if its only '-' create h2
+    html.pop();
+    html.push({ type: "heading", tag: "h" + level, content });
   },
 };
 
@@ -58,13 +84,13 @@ const list = {
   },
   create(line, html) {
     const content = _.trimStart(line, "* ");
-    html.push({ element: "list", tag: "li", content });
+    html.push({ type: "list", tag: "li", content });
   },
 };
 
 const paragraph = {
   create(line, html) {
-    html.push({ element: "paragraph", tag: "p", content: line });
+    html.push({ type: "paragraph", tag: "p", content: line });
   },
 };
 

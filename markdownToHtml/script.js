@@ -15,29 +15,61 @@ function processMarkdown() {
   htmlContainer.textContent = htmlText;
 }
 
-function markdownToHtml(markdown) {
-  // Separamos cada linea de texto para procesarla
-  const lines = markdown.split("\n");
-  // Se mapea cada linea
-  // metodo de lodas trim elimina espacios blancos al inicio y final de una cadena de texto
-  // metodo trimStart hace lo mismo que trim pero solo al comienzo
-  // Estos metodos se usan para eliminar componentes HTML una vez que se procesó
-  const htmlLines = _.map(lines, (line) => {
-    line = line.trim();
-    if (line.startsWith("#")) {
-      const level = _.takeWhile(line, (char) => char === "#").length;
-      const content = _.trimStart(line, "# ");
-      return `<h${level}>${content}</h${level}>`;
-    } else if (line.startsWith("* ")) {
-      const content = _.trimStart(line, "* ");
-      return `<li>${content}</li>`;
-    } else if (_.trim(line) === "") {
-      return "";
-    } else {
-      return `<p>${line}</p>`;
-    }
-  });
-  return htmlLines.join("\n");
+function markdownToHtml(markdownText) {
+  const markdownLines = markdownText.split("\n");
+  const html = [];
+
+  console.log("markdownLines", markdownLines);
+  markdownLines.forEach((line, index) => processOneLine(line, index, html, markdownLines));
+  console.log("html", html);
+  const htmlText = getHtmlText(html);
+  return htmlText;
+}
+
+function processOneLine(line, index, html, originalLines) {
+  line = line.trim();
+  if (heading.condition(line)) {
+    heading.create(line, html);
+  } else if (list.condition(line)) {
+    list.create(line, html);
+  } else if (line.trim() === "") {
+    return;
+  } else {
+    paragraph.create(line, html);
+  }
+
+  console.log("html in line", index, html);
+}
+
+const heading = {
+  condition(line) {
+    return line.startsWith("#");
+  },
+  create(line, html) {
+    const level = _.takeWhile(line, (char) => char === "#").length;
+    const content = _.trimStart(line, "# ");
+    html.push({ element: "heading", tag: "h" + level, content });
+  },
+};
+
+const list = {
+  condition(line) {
+    return line.startsWith("* ");
+  },
+  create(line, html) {
+    const content = _.trimStart(line, "* ");
+    html.push({ element: "list", tag: "li", content });
+  },
+};
+
+const paragraph = {
+  create(line, html) {
+    html.push({ element: "paragraph", tag: "p", content: line });
+  },
+};
+
+function getHtmlText(html) {
+  return html.map((line) => `<${line.tag}>${line.content}</${line.tag}>`).join("\n");
 }
 
 main();

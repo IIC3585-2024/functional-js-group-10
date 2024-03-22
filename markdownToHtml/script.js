@@ -17,28 +17,25 @@ function processMarkdown() {
 
 function markdownToHtml(markdownText) {
   const markdownLines = markdownText.split("\n");
-  const html = [];
 
-  console.log("markdownLines", markdownLines);
-  markdownLines.forEach((line, index) => processOneLine(line, index, html, markdownLines));
-  console.log("html", html);
-  const htmlText = getHtmlText(html);
+  const htmlArray = markdownLines.reduce((htmlArray, line) => processLine(htmlArray, line), []);
+
+  const htmlText = getHtmlText(htmlArray);
   return htmlText;
 }
 
-function processOneLine(line, index, html, originalLines) {
+function processLine(html, line) {
   line = line.trim();
   if (heading.condition(line, html)) {
     heading.create(line, html);
   } else if (list.condition(line)) {
     list.create(line, html);
   } else if (line.trim() === "") {
-    return;
+    return html;
   } else {
     paragraph.create(line, html);
   }
-
-  console.log("html in line", index, html);
+  return html;
 }
 
 const heading = {

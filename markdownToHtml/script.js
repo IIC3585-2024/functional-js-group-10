@@ -31,6 +31,8 @@ function processLine(htmlArray, line) {
     heading.create(htmlArray, line);
   } else if (unorderedList.condition(line)) {
     unorderedList.create(htmlArray, line);
+  } else if (orderedList.condition(line)) {
+    orderedList.create(htmlArray, line);
   } else {
     paragraph.create(htmlArray, line);
   }
@@ -172,6 +174,27 @@ const unorderedList = {
       lastElement.children.push(entry);
     } else {
       htmlArray.push({ type: "unordered-list", tag: "ul", children: [entry] });
+    }
+  },
+};
+
+const orderedList = {
+  condition(line) {
+    return line.trim().match(/^\d+\./);
+  },
+  create(htmlArray, line) {
+    const lastElement = _.last(htmlArray);
+    line = line.trim();
+    const entry = {
+      type: "list-entry",
+      tag: "li",
+      content: line.slice(2, line.length),
+    };
+
+    if (lastElement && lastElement.type === "ordered-list") {
+      lastElement.children.push(entry);
+    } else {
+      htmlArray.push({ type: "ordered-list", tag: "ol", children: [entry] });
     }
   },
 };

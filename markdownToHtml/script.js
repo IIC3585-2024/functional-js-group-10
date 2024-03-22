@@ -11,8 +11,8 @@ function processMarkdown() {
 
   console.log("markdownText", markdownText);
   console.log("htmlText", JSON.stringify(htmlText));
-  const htmlContainer = document.getElementById("html-text");
-  htmlContainer.textContent = htmlText;
+  const htmlTextContainer = document.getElementById("html-text");
+  htmlTextContainer.textContent = htmlText;
 }
 
 function markdownToHtml(markdownText) {
@@ -24,63 +24,63 @@ function markdownToHtml(markdownText) {
   return htmlText;
 }
 
-function processLine(html, line) {
+function processLine(htmlArray, line) {
   line = line.trim();
   if (blank.condition(line)) {
-    blank.create(html);
-  } else if (heading.condition(html, line)) {
-    heading.create(html, line);
+    blank.create(htmlArray);
+  } else if (heading.condition(htmlArray, line)) {
+    heading.create(htmlArray, line);
   } else if (list.condition(line)) {
-    list.create(html, line);
+    list.create(htmlArray, line);
   } else {
-    paragraph.create(html, line);
+    paragraph.create(htmlArray, line);
   }
-  return html;
+  return htmlArray;
 }
 
 const blank = {
   condition(line) {
     return line.trim() === "";
   },
-  create(html) {
-    html.push({ type: "blank" });
+  create(htmlArray) {
+    htmlArray.push({ type: "blank" });
   },
 };
 
 const heading = {
-  condition(html, line) {
-    return this.defaultCondition(line) || this.underlineCondition(html, line);
+  condition(htmlArray, line) {
+    return this.defaultCondition(line) || this.underlineCondition(htmlArray, line);
   },
   defaultCondition(line) {
     return line.startsWith("#");
   },
-  underlineCondition(html, line) {
+  underlineCondition(htmlArray, line) {
     if (!line.length) {
       return;
     }
 
-    const lastElement = _.last(html);
+    const lastElement = _.last(htmlArray);
     if (!lastElement || lastElement.type !== "paragraph") {
       return;
     }
 
     return line === _.repeat("=", line.length) || line === _.repeat("-", line.length); // If its a line of only '=' create h1, if its only '-' create h2
   },
-  create(html, line) {
-    if (this.defaultCondition(line)) this.createDefault(html, line);
-    else if (this.underlineCondition(html, line)) this.createUnderline(html, line);
+  create(htmlArray, line) {
+    if (this.defaultCondition(line)) this.createDefault(htmlArray, line);
+    else if (this.underlineCondition(htmlArray, line)) this.createUnderline(htmlArray, line);
   },
-  createDefault(html, line) {
+  createDefault(htmlArray, line) {
     const level = _.takeWhile(line, (char) => char === "#").length;
     const content = _.trimStart(line, "# ");
-    html.push({ type: "heading", tag: "h" + level, content });
+    htmlArray.push({ type: "heading", tag: "h" + level, content });
   },
-  createUnderline(html, line) {
-    const lastElement = _.last(html);
+  createUnderline(htmlArray, line) {
+    const lastElement = _.last(htmlArray);
     const content = lastElement.content;
     const level = line[0] === "=" ? 1 : 2; // If its a line of only '=' create h1, if its only '-' create h2
-    html.pop();
-    html.push({ type: "heading", tag: "h" + level, content });
+    htmlArray.pop();
+    htmlArray.push({ type: "heading", tag: "h" + level, content });
   },
 };
 
@@ -88,25 +88,25 @@ const list = {
   condition(line) {
     return line.startsWith("* ");
   },
-  create(html, line) {
+  create(htmlArray, line) {
     const content = _.trimStart(line, "* ");
-    html.push({ type: "list", tag: "li", content });
+    htmlArray.push({ type: "list", tag: "li", content });
   },
 };
 
 const paragraph = {
-  create(html, line) {
-    const lastElement = _.last(html);
+  create(htmlArray, line) {
+    const lastElement = _.last(htmlArray);
     if (lastElement && lastElement.type === "paragraph") {
       lastElement.content = lastElement.content + " " + line;
     } else {
-      html.push({ type: "paragraph", tag: "p", content: line });
+      htmlArray.push({ type: "paragraph", tag: "p", content: line });
     }
   },
 };
 
-function getHtmlText(html) {
-  return html
+function getHtmlText(htmlArray) {
+  return htmlArray
     .map((line) => {
       if (line.type === "blank") return "";
       else return `<${line.tag}>${line.content}</${line.tag}>`;

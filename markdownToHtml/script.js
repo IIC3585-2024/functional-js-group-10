@@ -26,26 +26,35 @@ function markdownToHtml(markdownText) {
 
 function processLine(html, line) {
   line = line.trim();
-  if (heading.condition(line, html)) {
-    heading.create(line, html);
+  if (blank.condition(line)) {
+    blank.create(html);
+  } else if (heading.condition(html, line)) {
+    heading.create(html, line);
   } else if (list.condition(line)) {
-    list.create(line, html);
-  } else if (line.trim() === "") {
-    return html;
+    list.create(html, line);
   } else {
-    paragraph.create(line, html);
+    paragraph.create(html, line);
   }
   return html;
 }
 
+const blank = {
+  condition(line) {
+    return line.trim() === "";
+  },
+  create(html) {
+    html.push({ type: "blank" });
+  },
+};
+
 const heading = {
-  condition(line, html) {
-    return this.defaultCondition(line) || this.underlineCondition(line, html);
+  condition(html, line) {
+    return this.defaultCondition(line) || this.underlineCondition(html, line);
   },
   defaultCondition(line) {
     return line.startsWith("#");
   },
-  underlineCondition(line, html) {
+  underlineCondition(html, line) {
     if (!line.length) {
       return;
     }
@@ -57,16 +66,16 @@ const heading = {
 
     return line === _.repeat("=", line.length) || line === _.repeat("-", line.length); // If its a line of only '=' create h1, if its only '-' create h2
   },
-  create(line, html) {
-    if (this.defaultCondition(line)) this.createDefault(line, html);
-    else if (this.underlineCondition(line, html)) this.createUnderline(line, html);
+  create(html, line) {
+    if (this.defaultCondition(line)) this.createDefault(html, line);
+    else if (this.underlineCondition(html, line)) this.createUnderline(html, line);
   },
-  createDefault(line, html) {
+  createDefault(html, line) {
     const level = _.takeWhile(line, (char) => char === "#").length;
     const content = _.trimStart(line, "# ");
     html.push({ type: "heading", tag: "h" + level, content });
   },
-  createUnderline(line, html) {
+  createUnderline(html, line) {
     const lastElement = _.last(html);
     const content = lastElement.content;
     const level = line[0] === "=" ? 1 : 2; // If its a line of only '=' create h1, if its only '-' create h2
@@ -79,20 +88,30 @@ const list = {
   condition(line) {
     return line.startsWith("* ");
   },
-  create(line, html) {
+  create(html, line) {
     const content = _.trimStart(line, "* ");
     html.push({ type: "list", tag: "li", content });
   },
 };
 
 const paragraph = {
-  create(line, html) {
-    html.push({ type: "paragraph", tag: "p", content: line });
+  create(html, line) {
+    const lastElement = _.last(html);
+    if (lastElement && lastElement.type === "paragraph") {
+      lastElement.content = lastElement.content + " " + line;
+    } else {
+      html.push({ type: "paragraph", tag: "p", content: line });
+    }
   },
 };
 
 function getHtmlText(html) {
-  return html.map((line) => `<${line.tag}>${line.content}</${line.tag}>`).join("\n");
+  return html
+    .map((line) => {
+      if (line.type === "blank") return "";
+      else return `<${line.tag}>${line.content}</${line.tag}>`;
+    })
+    .join("\n");
 }
 
 main();

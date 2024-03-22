@@ -25,7 +25,6 @@ function markdownToHtml(markdownText) {
 }
 
 function processLine(htmlArray, line) {
-  line = line.trim();
   if (blank.condition(line)) {
     blank.create(htmlArray);
   } else if (heading.condition(htmlArray, line)) {
@@ -49,10 +48,16 @@ const blank = {
 
 const heading = {
   condition(htmlArray, line) {
+    line = line.trim();
     return this.defaultCondition(line) || this.underlineCondition(htmlArray, line);
   },
   defaultCondition(line) {
-    return line.startsWith("#");
+    if (!line.startsWith("#")) {
+      return;
+    }
+
+    const level = _.takeWhile(line, (char) => char === "#").length;
+    return level >= 1 && level <= 6 && line[level] === " ";
   },
   underlineCondition(htmlArray, line) {
     if (!line.length) {
@@ -96,6 +101,12 @@ const list = {
 
 const paragraph = {
   create(htmlArray, line) {
+    const trailingSpaces = _.takeRightWhile(line, (char) => char === " ").length;
+    line = line.trim();
+    if (trailingSpaces >= 2) {
+      line = line + "<br>";
+    }
+
     const lastElement = _.last(htmlArray);
     if (lastElement && lastElement.type === "paragraph") {
       lastElement.content = lastElement.content + " " + line;

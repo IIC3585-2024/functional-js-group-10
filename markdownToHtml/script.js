@@ -157,14 +157,15 @@ const emphasis = {
 const unorderedList = {
   condition(line) {
     line = line.trim();
-    return line.startsWith("* ");
+    return line.startsWith("* ") || line.startsWith("- ") || line.startsWith("+ ");
   },
   create(htmlArray, line) {
     const lastElement = _.last(htmlArray);
+    line = line.trim();
     const entry = {
       type: "list-entry",
       tag: "li",
-      content: _.trimStart(line, "* "),
+      content: line.slice(2, line.length),
     };
 
     if (lastElement && lastElement.type === "unordered-list") {

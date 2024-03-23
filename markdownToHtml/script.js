@@ -25,8 +25,12 @@ function markdownToHtml(markdownText) {
 }
 
 function processLine(htmlArray, line) {
+  console.log(htmlArray, line);
   if (blank.condition(line)) {
     blank.create(htmlArray);
+  } else if (code.condition(htmlArray, line)) {
+    console.log("CREATING CODE");
+    code.create(htmlArray, line);
   } else if (heading.condition(htmlArray, line)) {
     heading.create(htmlArray, line);
   } else if (unorderedList.condition(line)) {
@@ -219,6 +223,49 @@ const orderedList = {
     } else {
       htmlArray.push({ type: "ordered-list", tag: "ol", children: [entry] });
     }
+  },
+};
+
+const code = {
+  condition(htmlArray, line) {
+    return (
+      this.backticksCondition(line) ||
+      this.indentationCondition(htmlArray, line) ||
+      this.afterBlockCodeCondition(htmlArray)
+    );
+  },
+  backticksCondition(line) {
+    return line.trimStart().startsWith("```");
+  },
+  indentationCondition(htmlArray, line) {
+    const hasMinimumIndentation = line.startsWith(_.repeat(" ", 4));
+    const lastElement = _.last(htmlArray) || {};
+    const lastElementIsList = ["ordered-list", "unordered-list"].includes(lastElement.type);
+    return hasMinimumIndentation && !lastElementIsList;
+  },
+  afterBlockCodeCondition(htmlArray) {
+    const lastElement = _.last(htmlArray);
+    return lastElement && lastElement.type === "code" && lastElement.open;
+  },
+  create(htmlArray, line) {
+    if (this.backticksCondition(line)) this.initOrCloseBlockCode(htmlArray, line);
+    else if (this.indentationCondition(htmlArray, line)) this.initOrCloseBlockCode(htmlArray, line);
+    else if (this.afterBlockCodeCondition(htmlArray)) this.appendToBlockCode(htmlArray, line);
+  },
+  initOrCloseBlockCode(htmlArray, line) {
+    console.log("initializing block code");
+    const lastElement = _.last(htmlArray);
+    if (lastElement && lastElement.type === "code" && lastElement.open) {
+      lastElement.open = false;
+    } else {
+      line = line.trim();
+      line = _.trimStart(line, "```");
+      htmlArray.push({ type: "code", tag: "code", open: true, content: line });
+    }
+  },
+  appendToBlockCode(htmlArray, line) {
+    const lastElement = _.last(htmlArray);
+    lastElement.content = lastElement.content + "\n" + line.trim();
   },
 };
 

@@ -113,44 +113,67 @@ const paragraph = {
 };
 
 function applyEmphasis(line) {
-  let length = 3;
-  let relativeStart = 0;
-  while (length > 0) {
-    const index1 = line.indexOf(_.repeat("*", length), relativeStart);
-    const index2 = line.indexOf(_.repeat("*", length), index1 + length);
-    if (index1 === -1 || index2 === -1) {
-      length--;
-      relativeStart = 0;
-      continue;
-    }
+  const possibleSymbols = [
+    { symbol: "`", length: 2 },
+    { symbol: "*", length: 3 },
+  ];
+  const used = [];
 
-    if (index2 - index1 === 1) {
-      relativeStart = index2;
-      continue;
-    }
+  possibleSymbols.forEach(({ symbol, length }) => {
+    let relativeStart = 0;
+    while (length > 0) {
+      const substring = _.repeat(symbol, length);
+      const index1 = line.indexOf(substring, relativeStart);
+      const index2 = line.indexOf(substring, index1 + length);
+      if (index1 === -1 || index2 === -1) {
+        length--;
+        relativeStart = 0;
+        continue;
+      }
 
-    line =
-      line.slice(0, relativeStart) +
-      line.slice(relativeStart, index1) +
-      emphasis[length].start +
-      line.slice(index1 + length, index2) +
-      emphasis[length].end +
-      line.slice(index2 + length);
-  }
+      const indexesAreAdjacent = index2 - index1 === 1;
+      const indexesAreInsideOtherEmphasis = used.some(
+        ([usedIndex1, usedIndex2]) => usedIndex1 <= index1 && index2 <= usedIndex2
+      );
+
+      if (indexesAreAdjacent || indexesAreInsideOtherEmphasis) {
+        relativeStart = index2;
+        continue;
+      }
+
+      line =
+        line.slice(0, relativeStart) +
+        line.slice(relativeStart, index1) +
+        emphasisSymbols[substring].start +
+        line.slice(index1 + length, index2) +
+        emphasisSymbols[substring].end +
+        line.slice(index2 + length);
+
+      used.push([index1, index2]);
+    }
+  });
 
   return line;
 }
 
-const emphasis = {
-  1: {
+const emphasisSymbols = {
+  "`": {
+    start: "<code>",
+    end: "</code>",
+  },
+  "``": {
+    start: "<code>",
+    end: "</code>",
+  },
+  "*": {
     start: "<em>",
     end: "</em>",
   },
-  2: {
+  "**": {
     start: "<strong>",
     end: "</strong>",
   },
-  3: {
+  "***": {
     start: "<em><strong>",
     end: "</strong></em>",
   },

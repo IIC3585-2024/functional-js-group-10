@@ -13,6 +13,11 @@ function processMarkdown() {
   console.log("htmlText", JSON.stringify(htmlText));
   const htmlTextContainer = document.getElementById("html-text");
   htmlTextContainer.textContent = htmlText;
+
+  //Renderizado
+  const htmlRenderedContainer = document.getElementById("html-rendered");
+  htmlRenderedContainer.innerHTML = htmlText;
+  console.log("htmlRender:", htmlTextContainer.innerHTML);
 }
 
 function markdownToHtml(markdownText) {
@@ -33,6 +38,10 @@ function processLine(htmlArray, line) {
     unorderedList.create(htmlArray, line);
   } else if (orderedList.condition(line)) {
     orderedList.create(htmlArray, line);
+  } else if (link.condition(line)) {
+    link.create(htmlArray, line);
+  } else if (image.condition(line)) {
+    image.create(htmlArray, line);
   } else {
     paragraph.create(htmlArray, line);
   }
@@ -199,6 +208,31 @@ const orderedList = {
   },
 };
 
+const link = {
+  condition(line) {
+    return line.trim().startsWith("[") && line.includes("](");
+  },
+  create(htmlArray, line) {
+    const parts = line.split("](");
+    const text = parts[0].slice(1).trim();
+    const url = parts[1].slice(0, -1).trim();
+    htmlArray.push({ type: "link", tag: "a", text, url });
+  },
+};
+
+const image = {
+  condition(line) {
+    return line.trim().startsWith("![") && line.includes("](");
+  },
+  create(htmlArray, line) {
+    const parts = line.split("](");
+    const altText = parts[0].slice(2).trim();
+    const url = parts[1].slice(0, -1).trim();
+    htmlArray.push({ type: "image", tag: "img", altText, url });
+  },
+};
+
+
 function getHtmlText(htmlArray) {
   return htmlArray.map((object) => objectToHtmlText(object)).join("\n");
 }
@@ -211,7 +245,12 @@ function objectToHtmlText(obj) {
     return `<${obj.tag}>\n${children}\n</${obj.tag}>`;
   } else if (obj.content) {
     return `<${obj.tag}>${obj.content}</${obj.tag}>`;
+  } else if (obj.type === "link") {
+    return `<${obj.tag} href="${obj.url}">${obj.text}</${obj.tag}>`;
+  } else if (obj.type === "image") {
+    return `<${obj.tag} src="${obj.url}" alt="${obj.altText}">`;
   }
+
 }
 
 main();

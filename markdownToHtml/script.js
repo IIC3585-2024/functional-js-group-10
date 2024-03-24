@@ -30,8 +30,11 @@ function markdownToHtml(markdownText) {
 }
 
 function processLine(htmlArray, line) {
+  console.log(htmlArray, line);
   if (blank.condition(line)) {
     blank.create(htmlArray);
+  } else if (code.condition(htmlArray, line)) {
+    code.create(htmlArray, line);
   } else if (heading.condition(htmlArray, line)) {
     heading.create(htmlArray, line);
   } else if (unorderedList.condition(line)) {
@@ -122,44 +125,67 @@ const paragraph = {
 };
 
 function applyEmphasis(line) {
-  let length = 3;
-  let relativeStart = 0;
-  while (length > 0) {
-    const index1 = line.indexOf(_.repeat("*", length), relativeStart);
-    const index2 = line.indexOf(_.repeat("*", length), index1 + length);
-    if (index1 === -1 || index2 === -1) {
-      length--;
-      relativeStart = 0;
-      continue;
-    }
+  const possibleSymbols = [
+    { symbol: "`", length: 2 },
+    { symbol: "*", length: 3 },
+  ];
+  const used = [];
 
-    if (index2 - index1 === 1) {
-      relativeStart = index2;
-      continue;
-    }
+  possibleSymbols.forEach(({ symbol, length }) => {
+    let relativeStart = 0;
+    while (length > 0) {
+      const substring = _.repeat(symbol, length);
+      const index1 = line.indexOf(substring, relativeStart);
+      const index2 = line.indexOf(substring, index1 + length);
+      if (index1 === -1 || index2 === -1) {
+        length--;
+        relativeStart = 0;
+        continue;
+      }
 
-    line =
-      line.slice(0, relativeStart) +
-      line.slice(relativeStart, index1) +
-      emphasis[length].start +
-      line.slice(index1 + length, index2) +
-      emphasis[length].end +
-      line.slice(index2 + length);
-  }
+      const indexesAreAdjacent = index2 - index1 === 1;
+      const indexesAreInsideOtherEmphasis = used.some(
+        ([usedIndex1, usedIndex2]) => usedIndex1 <= index1 && index2 <= usedIndex2
+      );
+
+      if (indexesAreAdjacent || indexesAreInsideOtherEmphasis) {
+        relativeStart = index2;
+        continue;
+      }
+
+      line =
+        line.slice(0, relativeStart) +
+        line.slice(relativeStart, index1) +
+        emphasisSymbols[substring].start +
+        line.slice(index1 + length, index2) +
+        emphasisSymbols[substring].end +
+        line.slice(index2 + length);
+
+      used.push([index1, index2]);
+    }
+  });
 
   return line;
 }
 
-const emphasis = {
-  1: {
+const emphasisSymbols = {
+  "`": {
+    start: "<code>",
+    end: "</code>",
+  },
+  "``": {
+    start: "<code>",
+    end: "</code>",
+  },
+  "*": {
     start: "<em>",
     end: "</em>",
   },
-  2: {
+  "**": {
     start: "<strong>",
     end: "</strong>",
   },
-  3: {
+  "***": {
     start: "<em><strong>",
     end: "</strong></em>",
   },
@@ -208,15 +234,66 @@ const orderedList = {
   },
 };
 
+const code = {
+  condition(htmlArray, line) {
+    return (
+      this.backticksCondition(line) ||
+      this.indentationCondition(htmlArray, line) ||
+      this.afterCodeBlockCondition(htmlArray)
+    );
+  },
+  backticksCondition(line) {
+    return line.trimStart().startsWith("```");
+  },
+  indentationCondition(htmlArray, line) {
+    const hasMinimumIndentation = line.startsWith(_.repeat(" ", 4));
+    const lastElement = _.last(htmlArray) || {};
+    const lastElementIsList = ["ordered-list", "unordered-list"].includes(lastElement.type);
+    return hasMinimumIndentation && !lastElementIsList;
+  },
+  afterCodeBlockCondition(htmlArray) {
+    const lastElement = _.last(htmlArray);
+    return lastElement && lastElement.type === "code" && lastElement.open;
+  },
+  create(htmlArray, line) {
+    if (this.backticksCondition(line)) this.initOrCloseCodeBlock(htmlArray, line);
+    else if (this.indentationCondition(htmlArray, line)) this.initOrAppendToCodeBlock(htmlArray, line);
+    else if (this.afterCodeBlockCondition(htmlArray)) this.appendToCodeBlock(htmlArray, line);
+  },
+  initOrCloseCodeBlock(htmlArray, line) {
+    const lastElement = _.last(htmlArray);
+    if (lastElement && lastElement.type === "code" && lastElement.open) {
+      lastElement.open = false;
+    } else {
+      line = line.trim();
+      line = _.trimStart(line, "```");
+      htmlArray.push({ type: "code", tag: "code", open: true, content: line });
+    }
+  },
+  initOrAppendToCodeBlock(htmlArray, line) {
+    const lastElement = _.last(htmlArray);
+    if (lastElement && lastElement.type === "code") {
+      this.appendToCodeBlock(htmlArray, line);
+    } else {
+      line = line.trim();
+      htmlArray.push({ type: "code", tag: "code", content: line });
+    }
+  },
+  appendToCodeBlock(htmlArray, line) {
+    const lastElement = _.last(htmlArray);
+    lastElement.content = lastElement.content + (lastElement.content.length ? "<br>" : "") + line.trim();
+  },
+};
+
 const link = {
   condition(line) {
     return line.trim().startsWith("[") && line.includes("](");
   },
   create(htmlArray, line) {
     const parts = line.split("](");
-    const text = parts[0].slice(1).trim();
+    const content = parts[0].slice(1).trim();
     const url = parts[1].slice(0, -1).trim();
-    htmlArray.push({ type: "link", tag: "a", text, url });
+    htmlArray.push({ type: "link", tag: "a", content, attributes: { href: url } });
   },
 };
 
@@ -228,10 +305,9 @@ const image = {
     const parts = line.split("](");
     const altText = parts[0].slice(2).trim();
     const url = parts[1].slice(0, -1).trim();
-    htmlArray.push({ type: "image", tag: "img", altText, url });
+    htmlArray.push({ type: "image", tag: "img", attributes: { src: url, alt: altText } });
   },
 };
-
 
 function getHtmlText(htmlArray) {
   return htmlArray.map((object) => objectToHtmlText(object)).join("\n");
@@ -240,17 +316,19 @@ function getHtmlText(htmlArray) {
 function objectToHtmlText(obj) {
   if (obj.type === "blank") {
     return "";
-  } else if (obj.children) {
-    const children = obj.children.map((child) => objectToHtmlText(child)).join("\n");
-    return `<${obj.tag}>\n${children}\n</${obj.tag}>`;
-  } else if (obj.content) {
-    return `<${obj.tag}>${obj.content}</${obj.tag}>`;
-  } else if (obj.type === "link") {
-    return `<${obj.tag} href="${obj.url}">${obj.text}</${obj.tag}>`;
-  } else if (obj.type === "image") {
-    return `<${obj.tag} src="${obj.url}" alt="${obj.altText}">`;
   }
 
+  let attributes = "";
+  Object.entries(obj.attributes || {}).forEach(([attr, value]) => (attributes += ` ${attr}="${value}"`));
+
+  let htmlText = `<${obj.tag}${attributes}>`;
+  if (obj.content) {
+    htmlText += `${obj.content}</${obj.tag}>`;
+  } else if (obj.children) {
+    const children = obj.children.map((child) => objectToHtmlText(child)).join("\n");
+    htmlText += `\n${children}\n</${obj.tag}>`;
+  }
+  return htmlText;
 }
 
 main();

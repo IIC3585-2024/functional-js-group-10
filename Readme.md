@@ -1,10 +1,15 @@
-Hay 2 códigos. Una primera aproximación era ver linea por linea y convertir a html. Para esto entrar a la carpeta functional-js-group-10, y correr con "npm run dev" desde la terminal. De ahí abrir localhost por defecto que indique.
+Hay 2 códigos. Una primera aproximación que hicimos era ver línea por línea y convertir a html, esto se encuentra en la carpeta functional-js-group-10.
 
-La otra opción es entrar a la carpeta markdownToHtml, la cual incluye la versión final. En esta se considera una estructura de "hijos" (pues dentro de un elemento markdown pueden haber otros). Incluye más elementos.
+La segunda aproximación y versión final en la que trabajamos se encuentra en la carpeta markdownToHtml. En esta se considera una estructura de "hijos" (pues dentro de un elemento markdown pueden haber otros). Para probarla se recomienda utilizar la extensión "Live server" de VSCode, dentro de la carpeta y del archivo index.html. A continuación dejamos un texto de prueba en el que se aprecian las fucniones realizadas, este se debe copiar y pegar de input en la vista que genera el live server:
 
-# Markdown de prueba!!!
+
+# Markdown de prueba \+!!!
 
 Este es un párrafo de texto normal.
+
+---
+
+\#Esto no es un título
 
 ## Encabezado 2
 

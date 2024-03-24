@@ -221,6 +221,9 @@ const unorderedList = {
   },
   create(htmlArray, line) {
     const lastElement = _.last(htmlArray);
+    if (line.startsWith(_.repeat(" ", 4)) && ["ordered-list", "unordered-list"].includes(lastElement.type)) {
+      return this.appendToLastList(htmlArray, line);
+    }
     line = line.trim();
     const entry = {
       type: "list-entry",
@@ -234,6 +237,21 @@ const unorderedList = {
       htmlArray.push({ type: "unordered-list", tag: "ul", children: [entry] });
     }
   },
+  appendToLastList(htmlArray, line) {
+    line = line.trim();
+    const lastElement = _.last(htmlArray);
+    const lastChild = _.last(lastElement.children);
+    const entry = {
+      type: "list-entry",
+      tag: "li",
+      content: line.slice(2, line.length),
+    };
+    if (lastChild.type === "unordered-list") {
+      lastChild.children.push(entry);
+    } else {
+      lastElement.children.push({ type: "unordered-list", tag: "ul", children: [entry] });
+    }
+  },
 };
 
 const orderedList = {
@@ -242,6 +260,9 @@ const orderedList = {
   },
   create(htmlArray, line) {
     const lastElement = _.last(htmlArray);
+    if (line.startsWith(_.repeat(" ", 4)) && ["ordered-list", "unordered-list"].includes(lastElement.type)) {
+      return this.appendToLastList(htmlArray, line);
+    }
     line = line.trim();
     const entry = {
       type: "list-entry",
@@ -253,6 +274,21 @@ const orderedList = {
       lastElement.children.push(entry);
     } else {
       htmlArray.push({ type: "ordered-list", tag: "ol", children: [entry] });
+    }
+  },
+  appendToLastList(htmlArray, line) {
+    line = line.trim();
+    const lastElement = _.last(htmlArray);
+    const lastChild = _.last(lastElement.children);
+    const entry = {
+      type: "list-entry",
+      tag: "li",
+      content: line.slice(2, line.length),
+    };
+    if (lastChild.type === "ordered-list") {
+      lastChild.children.push(entry);
+    } else {
+      lastElement.children.push({ type: "ordered-list", tag: "ol", children: [entry] });
     }
   },
 };

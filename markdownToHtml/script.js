@@ -92,7 +92,7 @@ const heading = {
   createDefault(htmlArray, line) {
     const level = _.takeWhile(line, (char) => char === "#").length;
     let content = _.trimStart(line, "# ");
-    content = applyEmphasis(content);
+    content = applyInLineElements(content);
 
     htmlArray.push({ type: "heading", tag: "h" + level, content });
   },
@@ -113,7 +113,7 @@ const paragraph = {
       line = line + "<br>";
     }
 
-    line = applyEmphasis(line);
+    line = applyInLineElements(line);
 
     const lastElement = _.last(htmlArray);
     if (lastElement && lastElement.type === "paragraph") {
@@ -123,6 +123,29 @@ const paragraph = {
     }
   },
 };
+
+function applyInLineElements(line) {
+  line = applyLinksAndImages(line);
+  line = applyEmphasis(line);
+  return line;
+}
+
+function applyLinksAndImages(line) {
+  const index1 = line.indexOf("[");
+  const index2 = line.indexOf("](");
+  const index3 = line.indexOf(")");
+
+  if (index1 === -1 || index2 === -1 || index3 === -1 || index1 > index2 || index2 > index3 || index1 > index3) {
+    return line;
+  }
+
+  const elementToCreate = line[index1 - 1] === "!" ? image : link;
+  const htmlElement = objectToHtmlText(elementToCreate.createObj(line.slice(index1, index3 + 1)));
+
+  line = line.slice(0, index1) + htmlElement + line.slice(index3 + 1);
+
+  return applyLinksAndImages(line);
+}
 
 function applyEmphasis(line) {
   const possibleSymbols = [
@@ -290,10 +313,13 @@ const link = {
     return line.trim().startsWith("[") && line.includes("](");
   },
   create(htmlArray, line) {
+    htmlArray.push(this.createObj(line));
+  },
+  createObj(line) {
     const parts = line.split("](");
     const content = parts[0].slice(1).trim();
     const url = parts[1].slice(0, -1).trim();
-    htmlArray.push({ type: "link", tag: "a", content, attributes: { href: url } });
+    return { type: "link", tag: "a", content, attributes: { href: url } };
   },
 };
 
@@ -302,10 +328,13 @@ const image = {
     return line.trim().startsWith("![") && line.includes("](");
   },
   create(htmlArray, line) {
+    htmlArray.push(this.createObj(line));
+  },
+  createObj(line) {
     const parts = line.split("](");
     const altText = parts[0].slice(2).trim();
     const url = parts[1].slice(0, -1).trim();
-    htmlArray.push({ type: "image", tag: "img", attributes: { src: url, alt: altText } });
+    return { type: "image", tag: "img", attributes: { src: url, alt: altText } };
   },
 };
 

@@ -30,6 +30,7 @@ function markdownToHtml(markdownText) {
 }
 
 function processLine(htmlArray, line) {
+  line = line.replace(/\\([*_{\[\]\(\)\}\.\!\+\-\#])/g, '$1');
   console.log(htmlArray, line);
   if (blank.condition(line)) {
     blank.create(htmlArray);
@@ -45,6 +46,8 @@ function processLine(htmlArray, line) {
     link.create(htmlArray, line);
   } else if (image.condition(line)) {
     image.create(htmlArray, line);
+  } else if (horizontalLine.condition(line)) {
+    horizontalLine.create(htmlArray, line);
   } else {
     paragraph.create(htmlArray, line);
   }
@@ -297,6 +300,14 @@ const link = {
   },
 };
 
+const horizontalLine = {
+  condition(line) {
+    return line.trim().match(/^(-{3,}|_{3,}|\*{3,})$/);
+  },
+  create(htmlArray) {
+    htmlArray.push({ type: "horizontal-line", tag: "hr" });
+  },
+};
 const image = {
   condition(line) {
     return line.trim().startsWith("![") && line.includes("](");

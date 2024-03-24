@@ -239,7 +239,7 @@ const code = {
     return (
       this.backticksCondition(line) ||
       this.indentationCondition(htmlArray, line) ||
-      this.afterBlockCodeCondition(htmlArray)
+      this.afterCodeBlockCondition(htmlArray)
     );
   },
   backticksCondition(line) {
@@ -251,17 +251,16 @@ const code = {
     const lastElementIsList = ["ordered-list", "unordered-list"].includes(lastElement.type);
     return hasMinimumIndentation && !lastElementIsList;
   },
-  afterBlockCodeCondition(htmlArray) {
+  afterCodeBlockCondition(htmlArray) {
     const lastElement = _.last(htmlArray);
     return lastElement && lastElement.type === "code" && lastElement.open;
   },
   create(htmlArray, line) {
-    if (this.backticksCondition(line)) this.initOrCloseBlockCode(htmlArray, line);
-    else if (this.indentationCondition(htmlArray, line)) this.initOrCloseBlockCode(htmlArray, line);
-    else if (this.afterBlockCodeCondition(htmlArray)) this.appendToBlockCode(htmlArray, line);
+    if (this.backticksCondition(line)) this.initOrCloseCodeBlock(htmlArray, line);
+    else if (this.indentationCondition(htmlArray, line)) this.initOrAppendToCodeBlock(htmlArray, line);
+    else if (this.afterCodeBlockCondition(htmlArray)) this.appendToCodeBlock(htmlArray, line);
   },
-  initOrCloseBlockCode(htmlArray, line) {
-    console.log("initializing block code");
+  initOrCloseCodeBlock(htmlArray, line) {
     const lastElement = _.last(htmlArray);
     if (lastElement && lastElement.type === "code" && lastElement.open) {
       lastElement.open = false;
@@ -271,9 +270,18 @@ const code = {
       htmlArray.push({ type: "code", tag: "code", open: true, content: line });
     }
   },
-  appendToBlockCode(htmlArray, line) {
+  initOrAppendToCodeBlock(htmlArray, line) {
     const lastElement = _.last(htmlArray);
-    lastElement.content = lastElement.content + "\n" + line.trim();
+    if (lastElement && lastElement.type === "code") {
+      this.appendToCodeBlock(htmlArray, line);
+    } else {
+      line = line.trim();
+      htmlArray.push({ type: "code", tag: "code", content: line });
+    }
+  },
+  appendToCodeBlock(htmlArray, line) {
+    const lastElement = _.last(htmlArray);
+    lastElement.content = lastElement.content + (lastElement.content.length ? "<br>" : "") + line.trim();
   },
 };
 

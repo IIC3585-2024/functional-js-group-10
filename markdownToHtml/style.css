@@ -1,7 +1,59 @@
 .body {
     text-align: center;
+    background-color: lightcyan;
+    padding: 20px;
+}
+
+.editor-section,
+.result-section {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+
+.editor-section {
+    background-color: white;
+    padding: 20px;
+    border: 1px solid #ccc;
+}
+
+.result-section {
+    background-color: white;
+    padding: 20px;
+    border: 1px solid #ccc;
 }
 
 #html-text {
     white-space: pre-line;
+}
+
+#html-rendered {
+    background-color: white;
+    text-align: left;
+    display: inline-block;
+    border: 1px solid #ccc;
+    padding: 10px;
+    ;
+}
+
+#html-rendered img,
+#html-rendered a {
+    display: block;
+    margin-bottom: 15px;
+}
+
+#markdown-to-html-button {
+    background-color: #59cd5d;
+    color: white;
+    padding: 10px 20px;
+    font-size: 16px;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background-color 0.3s;
+}
+
+#markdown-to-html-button:hover {
+    background-color: #45a049;
 }

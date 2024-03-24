@@ -34,7 +34,6 @@ function processLine(htmlArray, line) {
   if (blank.condition(line)) {
     blank.create(htmlArray);
   } else if (code.condition(htmlArray, line)) {
-    console.log("CREATING CODE");
     code.create(htmlArray, line);
   } else if (heading.condition(htmlArray, line)) {
     heading.create(htmlArray, line);
@@ -284,9 +283,9 @@ const link = {
   },
   create(htmlArray, line) {
     const parts = line.split("](");
-    const text = parts[0].slice(1).trim();
+    const content = parts[0].slice(1).trim();
     const url = parts[1].slice(0, -1).trim();
-    htmlArray.push({ type: "link", tag: "a", text, url });
+    htmlArray.push({ type: "link", tag: "a", content, attributes: { href: url } });
   },
 };
 
@@ -298,7 +297,7 @@ const image = {
     const parts = line.split("](");
     const altText = parts[0].slice(2).trim();
     const url = parts[1].slice(0, -1).trim();
-    htmlArray.push({ type: "image", tag: "img", altText, url });
+    htmlArray.push({ type: "image", tag: "img", attributes: { src: url, alt: altText } });
   },
 };
 
@@ -309,16 +308,19 @@ function getHtmlText(htmlArray) {
 function objectToHtmlText(obj) {
   if (obj.type === "blank") {
     return "";
+  }
+
+  let attributes = "";
+  Object.entries(obj.attributes || {}).forEach(([attr, value]) => (attributes += ` ${attr}="${value}"`));
+
+  let htmlText = `<${obj.tag}${attributes}>`;
+  if (obj.content) {
+    htmlText += `${obj.content}</${obj.tag}>`;
   } else if (obj.children) {
     const children = obj.children.map((child) => objectToHtmlText(child)).join("\n");
-    return `<${obj.tag}>\n${children}\n</${obj.tag}>`;
-  } else if (obj.content) {
-    return `<${obj.tag}>${obj.content}</${obj.tag}>`;
-  } else if (obj.type === "link") {
-    return `<${obj.tag} href="${obj.url}">${obj.text}</${obj.tag}>`;
-  } else if (obj.type === "image") {
-    return `<${obj.tag} src="${obj.url}" alt="${obj.altText}">`;
+    htmlText += `\n${children}\n</${obj.tag}>`;
   }
+  return htmlText;
 }
 
 main();

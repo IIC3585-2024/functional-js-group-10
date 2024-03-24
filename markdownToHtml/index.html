@@ -1,28 +1,30 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <title>Markdown to HTML</title>
-    <link rel="stylesheet" href="style.css" />
-    <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js"></script>
-    <script defer type="module" src="script.js"></script>
-  </head>
-  <body>
-    <div class="body">
-      <div class="editor-section">
-        <h3>Editor de Markdown</h3>
-        <textarea id="markdown-text" rows="10" cols="50"></textarea>
-        <br />
-        <button id="markdown-to-html-button">Convertir a HTML</button>
-      </div>
-      <div class="result-section">
-        <h3>HTML Resultante</h3>
-        <p id="html-text"></p>
-      </div>
-      <div>
-        <h3>- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -</h3>
-        <h3>HTML Renderizado</h3>
-        <p id="html-rendered"></p>
-      </div>
+
+<head>
+  <title>Markdown to HTML</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js"></script>
+  <script defer type="module" src="script.js"></script>
+</head>
+
+<body>
+  <div class="body">
+    <div class="editor-section">
+      <h3>Editor de Markdown</h3>
+      <textarea id="markdown-text" rows="10" cols="50"></textarea>
+      <br />
+      <button id="markdown-to-html-button">Convertir a HTML</button>
     </div>
-  </body>
+    <div class="result-section">
+      <h3>HTML Resultante</h3>
+      <p id="html-text"></p>
+    </div>
+    <div class="result-section" id="rendered-container">
+      <h3>HTML Renderizado</h3>
+      <p id="html-rendered"></p>
+    </div>
+  </div>
+</body>
+
 </html>

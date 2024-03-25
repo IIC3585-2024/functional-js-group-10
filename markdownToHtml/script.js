@@ -30,7 +30,7 @@ function markdownToHtml(markdownText) {
 }
 
 function processLine(htmlArray, line) {
-  line = line.replace(/\\([*_{\[\]\(\)\}\.\!\+\-\#])/g, '$1');
+  line = line.replace(/\\([*_{\[\]\(\)\}\.\!\+\-\#])/g, "$1");
   console.log(htmlArray, line);
   if (blank.condition(line)) {
     blank.create(htmlArray);
@@ -47,7 +47,7 @@ function processLine(htmlArray, line) {
   } else if (image.condition(line)) {
     image.create(htmlArray, line);
   } else if (horizontalLine.condition(line)) {
-    horizontalLine.create(htmlArray, line);
+    horizontalLine.create(htmlArray);
   } else {
     paragraph.create(htmlArray, line);
   }

@@ -1,7 +1,12 @@
-Hay 2 códigos. Una primera aproximación que hicimos era ver línea por línea y convertir a html, esto se encuentra en la carpeta functional-js-group-10.
+El código se encuentra dentro de la carpeta `/markdownToHtml`.
 
-La segunda aproximación y versión final en la que trabajamos se encuentra en la carpeta markdownToHtml. En esta se considera una estructura de "hijos" (pues dentro de un elemento markdown pueden haber otros). Para probarla se recomienda utilizar la extensión "Live server" de VSCode, dentro de la carpeta y del archivo index.html. A continuación dejamos un texto de prueba en el que se aprecian las fucniones realizadas, este se debe copiar y pegar de input en la vista que genera el live server:
+Para probarlo, es necesario servir el archivo `index.html`. Proponemos dos métodos:
+- Teniendo `python` instalado, dentro de la carpeta `/markdownToHtml`, correr el comando `python -m http.server`.
+- Utilizando la extensión "Live Server" de VSCode, realizando click derecho a `index.html` y seleccionando "Open with Live Server".
 
+A continuación, ofrecemos un markdown de prueba, para utilizar en la página con los elementos que logramos traducir a `html`.
+
+---
 
 # Markdown de prueba \+!!!
 
@@ -15,20 +20,45 @@ Este es un párrafo de texto normal.
 
 Esto es otro párrafo.
 
+Este título está generado por tener símbolos = abajo
+==
+
+Este subtítulo por tener símbolos -- abajo
+------------------------------------------
+
 - Lista no ordenada elemento 1
 - Lista no ordenada elemento 2
 - Lista no ordenada elemento 3
 
 1. Lista ordenada elemento 1
-2. Lista ordenada elemento 2
-3. Lista ordenada elemento 3
+1. Lista ordenada elemento 2
+    - Lista identada no ordenada elemento 1
+    - Lista identada no ordenada elemento 2
+    1. Lista identada ordenada elemento 1
+    3. Lista identada ordenada elemento 2
+1. Lista ordenada elemento 3
 
-**Texto en negrita**
+Texto en **negrita**
 
-*Texto en cursiva*
+Texto en *cursiva*
+
+Texto en ***negrita y cursiva***
+
+
+Acá hay código in line: `console.log("Hello World!")`
+
+```
+# esto es un bloque de código entre símbolos ```
+string = "Hello World!"
+console.log(string)
+```
+A continuación hay código que está identado
+
+    # codigo identado
+    console.log("Hello World!")
+
+### Links e Imagenes
 
 [Enlace a Google](https://www.google.com)
 
 ![Texto alternativo para la imagen](image.webp)
-
-Una línea en blanco arriba y abajo.
